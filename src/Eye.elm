@@ -41,7 +41,7 @@ view (w, h) (mouseX, mouseY) =
   in
     collage w h
       [ circle irisRadius
-          |> filled (rgb 107 126 71)
+          |> filled (rgb 107 176 71)
           |> move (irisX, irisY)
       , circle pupilRadius
           |> filled (rgb 50 50 50)

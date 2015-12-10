@@ -5609,7 +5609,7 @@ Elm.Main.make = function (_elm) {
       _p4,
       _U.list([A2($Graphics$Collage.move,
               {ctor: "_Tuple2",_0: irisX,_1: irisY},
-              A2($Graphics$Collage.filled,A3($Color.rgb,107,126,71),$Graphics$Collage.circle(irisRadius)))
+              A2($Graphics$Collage.filled,A3($Color.rgb,107,176,71),$Graphics$Collage.circle(irisRadius)))
               ,A2($Graphics$Collage.move,
               {ctor: "_Tuple2",_0: pupilX,_1: pupilY},
               A2($Graphics$Collage.filled,A3($Color.rgb,50,50,50),$Graphics$Collage.circle(pupilRadius)))
