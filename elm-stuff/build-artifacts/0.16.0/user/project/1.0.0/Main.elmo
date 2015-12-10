@@ -12,14 +12,25 @@ Elm.Main.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
+   $Signal = Elm.Signal.make(_elm),
+   $Time = Elm.Time.make(_elm);
    var _op = {};
+   var update = F2(function (time,model) {    return _U.update(model,{rectAngle: model.rectAngle + 1.0e-2,ngonAngel: model.ngonAngel - 6.0e-2});});
    var clearGrey = A4($Color.rgba,111,111,111,0.6);
-   var view = A3($Graphics$Collage.collage,
-   300,
-   300,
-   _U.list([A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: -10,_1: 0},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,4,75)))
-           ,A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: 50,_1: 10},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,5,50)))]));
-   var main = view;
-   return _elm.Main.values = {_op: _op,view: view,clearGrey: clearGrey,main: main};
+   var view = function (model) {
+      return A3($Graphics$Collage.collage,
+      300,
+      300,
+      _U.list([A2($Graphics$Collage.rotate,
+              model.rectAngle,
+              A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: -10,_1: 0},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,4,75))))
+              ,A2($Graphics$Collage.rotate,
+              model.ngonAngel,
+              A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: 50,_1: 10},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,5,50))))]));
+   };
+   var initialModel = {rectAngle: 0.0,ngonAngel: 0.0};
+   var model = A3($Signal.foldp,update,initialModel,$Time.fps(30));
+   var main = A2($Signal.map,view,model);
+   var Model = F2(function (a,b) {    return {rectAngle: a,ngonAngel: b};});
+   return _elm.Main.values = {_op: _op,Model: Model,initialModel: initialModel,view: view,clearGrey: clearGrey,update: update,model: model,main: main};
 };
