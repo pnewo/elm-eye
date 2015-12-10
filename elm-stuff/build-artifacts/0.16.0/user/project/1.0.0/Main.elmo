@@ -1,0 +1,25 @@
+Elm.Main = Elm.Main || {};
+Elm.Main.make = function (_elm) {
+   "use strict";
+   _elm.Main = _elm.Main || {};
+   if (_elm.Main.values) return _elm.Main.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var clearGrey = A4($Color.rgba,111,111,111,0.6);
+   var view = A3($Graphics$Collage.collage,
+   300,
+   300,
+   _U.list([A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: -10,_1: 0},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,4,75)))
+           ,A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: 50,_1: 10},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,5,50)))]));
+   var main = view;
+   return _elm.Main.values = {_op: _op,view: view,clearGrey: clearGrey,main: main};
+};
