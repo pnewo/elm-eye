@@ -11,26 +11,58 @@ Elm.Main.make = function (_elm) {
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $Mouse = Elm.Mouse.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
-   $Time = Elm.Time.make(_elm);
+   $Window = Elm.Window.make(_elm);
    var _op = {};
-   var update = F2(function (time,model) {    return _U.update(model,{rectAngle: model.rectAngle + 1.0e-2,ngonAngel: model.ngonAngel - 6.0e-2});});
-   var clearGrey = A4($Color.rgba,111,111,111,0.6);
-   var view = function (model) {
-      return A3($Graphics$Collage.collage,
-      300,
-      300,
-      _U.list([A2($Graphics$Collage.rotate,
-              model.rectAngle,
-              A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: -10,_1: 0},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,4,75))))
-              ,A2($Graphics$Collage.rotate,
-              model.ngonAngel,
-              A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: 50,_1: 10},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,5,50))))]));
+   var windowSize = $Window.dimensions;
+   var mousePosition = $Mouse.position;
+   var eyeGradient = function (rad) {
+      return A5($Color.radial,
+      {ctor: "_Tuple2",_0: 0,_1: 0},
+      rad / 3,
+      {ctor: "_Tuple2",_0: 0,_1: 0},
+      rad,
+      _U.list([{ctor: "_Tuple2",_0: 0,_1: A4($Color.rgba,255,255,255,0)},{ctor: "_Tuple2",_0: 1,_1: A4($Color.rgba,100,100,100,0.2)}]));
    };
-   var initialModel = {rectAngle: 0.0,ngonAngel: 0.0};
-   var model = A3($Signal.foldp,update,initialModel,$Time.fps(30));
-   var main = A2($Signal.map,view,model);
-   var Model = F2(function (a,b) {    return {rectAngle: a,ngonAngel: b};});
-   return _elm.Main.values = {_op: _op,Model: Model,initialModel: initialModel,view: view,clearGrey: clearGrey,update: update,model: model,main: main};
+   var eyeBall = function (rad) {    return A2($Graphics$Collage.gradient,eyeGradient(rad),$Graphics$Collage.circle(rad));};
+   var eyeGlare = A2($Graphics$Collage.move,
+   {ctor: "_Tuple2",_0: 10,_1: 10},
+   A2($Graphics$Collage.filled,A4($Color.rgba,255,255,255,0.4),$Graphics$Collage.circle(7)));
+   var view = F2(function (_p1,_p0) {
+      var _p2 = _p1;
+      var _p5 = _p2._0;
+      var _p4 = _p2._1;
+      var _p3 = _p0;
+      var eyeRadius = 50.0;
+      var irisRadius = eyeRadius * 3 / 5;
+      var pupilRadius = irisRadius / 2;
+      var mouseY$ = -2 * $Basics.toFloat(_p3._1) / $Basics.toFloat(_p4) + 1;
+      var irisY = mouseY$ * (eyeRadius - irisRadius);
+      var pupilY = mouseY$ * (eyeRadius - pupilRadius);
+      var mouseX$ = 2 * $Basics.toFloat(_p3._0) / $Basics.toFloat(_p5) - 1;
+      var irisX = mouseX$ * (eyeRadius - irisRadius);
+      var pupilX = mouseX$ * (eyeRadius - pupilRadius);
+      return A3($Graphics$Collage.collage,
+      _p5,
+      _p4,
+      _U.list([A2($Graphics$Collage.move,
+              {ctor: "_Tuple2",_0: irisX,_1: irisY},
+              A2($Graphics$Collage.filled,A3($Color.rgb,107,126,71),$Graphics$Collage.circle(irisRadius)))
+              ,A2($Graphics$Collage.move,
+              {ctor: "_Tuple2",_0: pupilX,_1: pupilY},
+              A2($Graphics$Collage.filled,A3($Color.rgb,50,50,50),$Graphics$Collage.circle(pupilRadius)))
+              ,eyeGlare
+              ,eyeBall(eyeRadius)]));
+   });
+   var main = A3($Signal.map2,view,windowSize,mousePosition);
+   return _elm.Main.values = {_op: _op
+                             ,eyeGlare: eyeGlare
+                             ,eyeGradient: eyeGradient
+                             ,eyeBall: eyeBall
+                             ,view: view
+                             ,mousePosition: mousePosition
+                             ,windowSize: windowSize
+                             ,main: main};
 };

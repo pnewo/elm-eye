@@ -2646,116 +2646,6 @@ Elm.Native.Signal.make = function(localRuntime) {
 	};
 };
 
-Elm.Native.Time = {};
-
-Elm.Native.Time.make = function(localRuntime)
-{
-	localRuntime.Native = localRuntime.Native || {};
-	localRuntime.Native.Time = localRuntime.Native.Time || {};
-	if (localRuntime.Native.Time.values)
-	{
-		return localRuntime.Native.Time.values;
-	}
-
-	var NS = Elm.Native.Signal.make(localRuntime);
-	var Maybe = Elm.Maybe.make(localRuntime);
-
-
-	// FRAMES PER SECOND
-
-	function fpsWhen(desiredFPS, isOn)
-	{
-		var msPerFrame = 1000 / desiredFPS;
-		var ticker = NS.input('fps-' + desiredFPS, null);
-
-		function notifyTicker()
-		{
-			localRuntime.notify(ticker.id, null);
-		}
-
-		function firstArg(x, y)
-		{
-			return x;
-		}
-
-		// input fires either when isOn changes, or when ticker fires.
-		// Its value is a tuple with the current timestamp, and the state of isOn
-		var input = NS.timestamp(A3(NS.map2, F2(firstArg), NS.dropRepeats(isOn), ticker));
-
-		var initialState = {
-			isOn: false,
-			time: localRuntime.timer.programStart,
-			delta: 0
-		};
-
-		var timeoutId;
-
-		function update(input, state)
-		{
-			var currentTime = input._0;
-			var isOn = input._1;
-			var wasOn = state.isOn;
-			var previousTime = state.time;
-
-			if (isOn)
-			{
-				timeoutId = localRuntime.setTimeout(notifyTicker, msPerFrame);
-			}
-			else if (wasOn)
-			{
-				clearTimeout(timeoutId);
-			}
-
-			return {
-				isOn: isOn,
-				time: currentTime,
-				delta: (isOn && !wasOn) ? 0 : currentTime - previousTime
-			};
-		}
-
-		return A2(
-			NS.map,
-			function(state) { return state.delta; },
-			A3(NS.foldp, F2(update), update(input.value, initialState), input)
-		);
-	}
-
-
-	// EVERY
-
-	function every(t)
-	{
-		var ticker = NS.input('every-' + t, null);
-		function tellTime()
-		{
-			localRuntime.notify(ticker.id, null);
-		}
-		var clock = A2(NS.map, fst, NS.timestamp(ticker));
-		setInterval(tellTime, t);
-		return clock;
-	}
-
-
-	function fst(pair)
-	{
-		return pair._0;
-	}
-
-
-	function read(s)
-	{
-		var t = Date.parse(s);
-		return isNaN(t) ? Maybe.Nothing : Maybe.Just(t);
-	}
-
-	return localRuntime.Native.Time.values = {
-		fpsWhen: F2(fpsWhen),
-		every: every,
-		toDate: function(t) { return new Date(t); },
-		read: read
-	};
-};
-
 Elm.Native.Transform2D = {};
 Elm.Native.Transform2D.make = function(localRuntime) {
 	localRuntime.Native = localRuntime.Native || {};
@@ -5531,51 +5421,142 @@ Elm.Signal.make = function (_elm) {
                                ,forwardTo: forwardTo
                                ,Mailbox: Mailbox};
 };
-Elm.Time = Elm.Time || {};
-Elm.Time.make = function (_elm) {
+Elm.Native = Elm.Native || {};
+Elm.Native.Mouse = {};
+Elm.Native.Mouse.make = function(localRuntime) {
+	localRuntime.Native = localRuntime.Native || {};
+	localRuntime.Native.Mouse = localRuntime.Native.Mouse || {};
+	if (localRuntime.Native.Mouse.values)
+	{
+		return localRuntime.Native.Mouse.values;
+	}
+
+	var NS = Elm.Native.Signal.make(localRuntime);
+	var Utils = Elm.Native.Utils.make(localRuntime);
+
+	var position = NS.input('Mouse.position', Utils.Tuple2(0, 0));
+
+	var isDown = NS.input('Mouse.isDown', false);
+
+	var clicks = NS.input('Mouse.clicks', Utils.Tuple0);
+
+	var node = localRuntime.isFullscreen()
+		? document
+		: localRuntime.node;
+
+	localRuntime.addListener([clicks.id], node, 'click', function click() {
+		localRuntime.notify(clicks.id, Utils.Tuple0);
+	});
+	localRuntime.addListener([isDown.id], node, 'mousedown', function down() {
+		localRuntime.notify(isDown.id, true);
+	});
+	localRuntime.addListener([isDown.id], node, 'mouseup', function up() {
+		localRuntime.notify(isDown.id, false);
+	});
+	localRuntime.addListener([position.id], node, 'mousemove', function move(e) {
+		localRuntime.notify(position.id, Utils.getXY(e));
+	});
+
+	return localRuntime.Native.Mouse.values = {
+		position: position,
+		isDown: isDown,
+		clicks: clicks
+	};
+};
+
+Elm.Mouse = Elm.Mouse || {};
+Elm.Mouse.make = function (_elm) {
    "use strict";
-   _elm.Time = _elm.Time || {};
-   if (_elm.Time.values) return _elm.Time.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Native$Signal = Elm.Native.Signal.make(_elm),
-   $Native$Time = Elm.Native.Time.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
+   _elm.Mouse = _elm.Mouse || {};
+   if (_elm.Mouse.values) return _elm.Mouse.values;
+   var _U = Elm.Native.Utils.make(_elm),$Basics = Elm.Basics.make(_elm),$Native$Mouse = Elm.Native.Mouse.make(_elm),$Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var delay = $Native$Signal.delay;
-   var since = F2(function (time,signal) {
-      var stop = A2($Signal.map,$Basics.always(-1),A2(delay,time,signal));
-      var start = A2($Signal.map,$Basics.always(1),signal);
-      var delaydiff = A3($Signal.foldp,F2(function (x,y) {    return x + y;}),0,A2($Signal.merge,start,stop));
-      return A2($Signal.map,F2(function (x,y) {    return !_U.eq(x,y);})(0),delaydiff);
-   });
-   var timestamp = $Native$Signal.timestamp;
-   var every = $Native$Time.every;
-   var fpsWhen = $Native$Time.fpsWhen;
-   var fps = function (targetFrames) {    return A2(fpsWhen,targetFrames,$Signal.constant(true));};
-   var inMilliseconds = function (t) {    return t;};
-   var millisecond = 1;
-   var second = 1000 * millisecond;
-   var minute = 60 * second;
-   var hour = 60 * minute;
-   var inHours = function (t) {    return t / hour;};
-   var inMinutes = function (t) {    return t / minute;};
-   var inSeconds = function (t) {    return t / second;};
-   return _elm.Time.values = {_op: _op
-                             ,millisecond: millisecond
-                             ,second: second
-                             ,minute: minute
-                             ,hour: hour
-                             ,inMilliseconds: inMilliseconds
-                             ,inSeconds: inSeconds
-                             ,inMinutes: inMinutes
-                             ,inHours: inHours
-                             ,fps: fps
-                             ,fpsWhen: fpsWhen
-                             ,every: every
-                             ,timestamp: timestamp
-                             ,delay: delay
-                             ,since: since};
+   var clicks = $Native$Mouse.clicks;
+   var isDown = $Native$Mouse.isDown;
+   var position = $Native$Mouse.position;
+   var x = A2($Signal.map,$Basics.fst,position);
+   var y = A2($Signal.map,$Basics.snd,position);
+   return _elm.Mouse.values = {_op: _op,position: position,x: x,y: y,isDown: isDown,clicks: clicks};
+};
+Elm.Native = Elm.Native || {};
+Elm.Native.Window = {};
+Elm.Native.Window.make = function make(localRuntime) {
+	localRuntime.Native = localRuntime.Native || {};
+	localRuntime.Native.Window = localRuntime.Native.Window || {};
+	if (localRuntime.Native.Window.values)
+	{
+		return localRuntime.Native.Window.values;
+	}
+
+	var NS = Elm.Native.Signal.make(localRuntime);
+	var Tuple2 = Elm.Native.Utils.make(localRuntime).Tuple2;
+
+
+	function getWidth()
+	{
+		return localRuntime.node.clientWidth;
+	}
+
+
+	function getHeight()
+	{
+		if (localRuntime.isFullscreen())
+		{
+			return window.innerHeight;
+		}
+		return localRuntime.node.clientHeight;
+	}
+
+
+	var dimensions = NS.input('Window.dimensions', Tuple2(getWidth(), getHeight()));
+
+
+	function resizeIfNeeded()
+	{
+		// Do not trigger event if the dimensions have not changed.
+		// This should be most of the time.
+		var w = getWidth();
+		var h = getHeight();
+		if (dimensions.value._0 === w && dimensions.value._1 === h)
+		{
+			return;
+		}
+
+		setTimeout(function() {
+			// Check again to see if the dimensions have changed.
+			// It is conceivable that the dimensions have changed
+			// again while some other event was being processed.
+			w = getWidth();
+			h = getHeight();
+			if (dimensions.value._0 === w && dimensions.value._1 === h)
+			{
+				return;
+			}
+			localRuntime.notify(dimensions.id, Tuple2(w, h));
+		}, 0);
+	}
+
+
+	localRuntime.addListener([dimensions.id], window, 'resize', resizeIfNeeded);
+
+
+	return localRuntime.Native.Window.values = {
+		dimensions: dimensions,
+		resizeIfNeeded: resizeIfNeeded
+	};
+};
+
+Elm.Window = Elm.Window || {};
+Elm.Window.make = function (_elm) {
+   "use strict";
+   _elm.Window = _elm.Window || {};
+   if (_elm.Window.values) return _elm.Window.values;
+   var _U = Elm.Native.Utils.make(_elm),$Basics = Elm.Basics.make(_elm),$Native$Window = Elm.Native.Window.make(_elm),$Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var dimensions = $Native$Window.dimensions;
+   var width = A2($Signal.map,$Basics.fst,dimensions);
+   var height = A2($Signal.map,$Basics.snd,dimensions);
+   return _elm.Window.values = {_op: _op,dimensions: dimensions,width: width,height: height};
 };
 Elm.Main = Elm.Main || {};
 Elm.Main.make = function (_elm) {
@@ -5590,26 +5571,58 @@ Elm.Main.make = function (_elm) {
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $Mouse = Elm.Mouse.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
-   $Time = Elm.Time.make(_elm);
+   $Window = Elm.Window.make(_elm);
    var _op = {};
-   var update = F2(function (time,model) {    return _U.update(model,{rectAngle: model.rectAngle + 1.0e-2,ngonAngel: model.ngonAngel - 6.0e-2});});
-   var clearGrey = A4($Color.rgba,111,111,111,0.6);
-   var view = function (model) {
-      return A3($Graphics$Collage.collage,
-      300,
-      300,
-      _U.list([A2($Graphics$Collage.rotate,
-              model.rectAngle,
-              A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: -10,_1: 0},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,4,75))))
-              ,A2($Graphics$Collage.rotate,
-              model.ngonAngel,
-              A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: 50,_1: 10},A2($Graphics$Collage.filled,clearGrey,A2($Graphics$Collage.ngon,5,50))))]));
+   var windowSize = $Window.dimensions;
+   var mousePosition = $Mouse.position;
+   var eyeGradient = function (rad) {
+      return A5($Color.radial,
+      {ctor: "_Tuple2",_0: 0,_1: 0},
+      rad / 3,
+      {ctor: "_Tuple2",_0: 0,_1: 0},
+      rad,
+      _U.list([{ctor: "_Tuple2",_0: 0,_1: A4($Color.rgba,255,255,255,0)},{ctor: "_Tuple2",_0: 1,_1: A4($Color.rgba,100,100,100,0.2)}]));
    };
-   var initialModel = {rectAngle: 0.0,ngonAngel: 0.0};
-   var model = A3($Signal.foldp,update,initialModel,$Time.fps(30));
-   var main = A2($Signal.map,view,model);
-   var Model = F2(function (a,b) {    return {rectAngle: a,ngonAngel: b};});
-   return _elm.Main.values = {_op: _op,Model: Model,initialModel: initialModel,view: view,clearGrey: clearGrey,update: update,model: model,main: main};
+   var eyeBall = function (rad) {    return A2($Graphics$Collage.gradient,eyeGradient(rad),$Graphics$Collage.circle(rad));};
+   var eyeGlare = A2($Graphics$Collage.move,
+   {ctor: "_Tuple2",_0: 10,_1: 10},
+   A2($Graphics$Collage.filled,A4($Color.rgba,255,255,255,0.4),$Graphics$Collage.circle(7)));
+   var view = F2(function (_p1,_p0) {
+      var _p2 = _p1;
+      var _p5 = _p2._0;
+      var _p4 = _p2._1;
+      var _p3 = _p0;
+      var eyeRadius = 50.0;
+      var irisRadius = eyeRadius * 3 / 5;
+      var pupilRadius = irisRadius / 2;
+      var mouseY$ = -2 * $Basics.toFloat(_p3._1) / $Basics.toFloat(_p4) + 1;
+      var irisY = mouseY$ * (eyeRadius - irisRadius);
+      var pupilY = mouseY$ * (eyeRadius - pupilRadius);
+      var mouseX$ = 2 * $Basics.toFloat(_p3._0) / $Basics.toFloat(_p5) - 1;
+      var irisX = mouseX$ * (eyeRadius - irisRadius);
+      var pupilX = mouseX$ * (eyeRadius - pupilRadius);
+      return A3($Graphics$Collage.collage,
+      _p5,
+      _p4,
+      _U.list([A2($Graphics$Collage.move,
+              {ctor: "_Tuple2",_0: irisX,_1: irisY},
+              A2($Graphics$Collage.filled,A3($Color.rgb,107,126,71),$Graphics$Collage.circle(irisRadius)))
+              ,A2($Graphics$Collage.move,
+              {ctor: "_Tuple2",_0: pupilX,_1: pupilY},
+              A2($Graphics$Collage.filled,A3($Color.rgb,50,50,50),$Graphics$Collage.circle(pupilRadius)))
+              ,eyeGlare
+              ,eyeBall(eyeRadius)]));
+   });
+   var main = A3($Signal.map2,view,windowSize,mousePosition);
+   return _elm.Main.values = {_op: _op
+                             ,eyeGlare: eyeGlare
+                             ,eyeGradient: eyeGradient
+                             ,eyeBall: eyeBall
+                             ,view: view
+                             ,mousePosition: mousePosition
+                             ,windowSize: windowSize
+                             ,main: main};
 };
