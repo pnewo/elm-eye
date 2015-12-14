@@ -5592,29 +5592,55 @@ Elm.Main.make = function (_elm) {
    A2($Graphics$Collage.filled,A4($Color.rgba,255,255,255,0.4),$Graphics$Collage.circle(7)));
    var view = F2(function (_p1,_p0) {
       var _p2 = _p1;
-      var _p5 = _p2._0;
-      var _p4 = _p2._1;
+      var _p8 = _p2._0;
+      var _p7 = _p2._1;
       var _p3 = _p0;
+      var _p6 = _p3._1;
+      var _p5 = _p3._0;
       var eyeRadius = 50.0;
       var irisRadius = eyeRadius * 3 / 5;
       var pupilRadius = irisRadius / 2;
-      var mouseY$ = -2 * $Basics.toFloat(_p3._1) / $Basics.toFloat(_p4) + 1;
+      var _p4 = {ctor: "_Tuple2",_0: $Basics.toFloat(_p5) - $Basics.toFloat(_p8) / 2,_1: $Basics.toFloat(_p7) / 2 - $Basics.toFloat(_p6)};
+      var dx = _p4._0;
+      var dy = _p4._1;
+      var eyeAngle = A2($Basics.atan2,dy,dx);
+      var eyeAngle2 = A2($Basics.atan2,dx,dy);
+      var distance = $Basics.sqrt(Math.pow(dy,2) + Math.pow(dx,2));
+      var halfH = $Basics.toFloat(_p7) / 2;
+      var mouseY$ = 1 - $Basics.toFloat(_p6) / halfH;
       var irisY = mouseY$ * (eyeRadius - irisRadius);
       var pupilY = mouseY$ * (eyeRadius - pupilRadius);
-      var mouseX$ = 2 * $Basics.toFloat(_p3._0) / $Basics.toFloat(_p5) - 1;
+      var halfW = $Basics.toFloat(_p8) / 2;
+      var mouseX$ = $Basics.toFloat(_p5) / halfW - 1;
       var irisX = mouseX$ * (eyeRadius - irisRadius);
       var pupilX = mouseX$ * (eyeRadius - pupilRadius);
+      var corner = A2($Basics.atan2,halfH,halfW);
+      var otherCorner = $Basics.pi - corner;
+      var topBottom = _U.cmp($Basics.abs(A2($Basics.atan2,dy,dx)),corner) > 0 && _U.cmp($Basics.abs(A2($Basics.atan2,dy,dx)),otherCorner) < 0 ? true : false;
+      var maxDistance = topBottom ? $Basics.abs(halfH / $Basics.cos($Basics.abs(eyeAngle2))) : $Basics.abs(halfW / $Basics.cos($Basics.abs(eyeAngle)));
+      var distanceCoef = distance / maxDistance;
       return A3($Graphics$Collage.collage,
-      _p5,
-      _p4,
-      _U.list([A2($Graphics$Collage.move,
-              {ctor: "_Tuple2",_0: irisX,_1: irisY},
-              A2($Graphics$Collage.filled,A3($Color.rgb,107,176,71),$Graphics$Collage.circle(irisRadius)))
-              ,A2($Graphics$Collage.move,
-              {ctor: "_Tuple2",_0: pupilX,_1: pupilY},
-              A2($Graphics$Collage.filled,A3($Color.rgb,50,50,50),$Graphics$Collage.circle(pupilRadius)))
+      _p8,
+      _p7,
+      _U.list([A2($Graphics$Collage.rotate,
+              eyeAngle,
+              $Graphics$Collage.group(_U.list([A2($Graphics$Collage.move,
+                                              {ctor: "_Tuple2",_0: 27 * distanceCoef,_1: 0},
+                                              A2($Graphics$Collage.filled,
+                                              A3($Color.rgb,107,176,71),
+                                              A2($Graphics$Collage.oval,irisRadius * 2 - 15 * distanceCoef,irisRadius * 2)))
+                                              ,A2($Graphics$Collage.move,
+                                              {ctor: "_Tuple2",_0: 35 * distanceCoef,_1: 0},
+                                              A2($Graphics$Collage.filled,
+                                              A3($Color.rgb,50,50,50),
+                                              A2($Graphics$Collage.oval,pupilRadius * 2 - 8 * distanceCoef,pupilRadius * 2)))])))
               ,eyeGlare
-              ,eyeBall(eyeRadius)]));
+              ,eyeBall(eyeRadius)
+              ,$Graphics$Collage.toForm($Graphics$Element.show({distance: distance
+                                                               ,eyeAngle: eyeAngle
+                                                               ,eyeAngle2: eyeAngle2
+                                                               ,maxDistance: maxDistance
+                                                               ,distanceCoef: distanceCoef}))]));
    });
    var main = A3($Signal.map2,view,windowSize,mousePosition);
    return _elm.Main.values = {_op: _op

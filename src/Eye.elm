@@ -25,12 +25,14 @@ eyeBall rad =
 
 
 view : (Int, Int) -> (Int, Int) -> Element
-view (w, h) (mouseX, mouseY) =
+view (w, h) (x, y) =
   let
-    mouseX' = 2 * toFloat mouseX / toFloat w - 1
-    mouseY' = (-2) * toFloat mouseY / toFloat h + 1
-    -- -2 * 5 / 5 - 1 = - 1
-    -- -2 * 0 / 5 - 1 = 1
+    halfW = toFloat w / 2
+    halfH = toFloat h / 2
+    mouseX' = toFloat x / halfW - 1
+    mouseY' = 1 - toFloat y / halfH
+    (dx,dy) =
+      (toFloat x - toFloat w / 2, toFloat h / 2 - toFloat y)
     eyeRadius = 50.0
     irisRadius = eyeRadius * 3 / 5
     pupilRadius = irisRadius / 2
@@ -38,16 +40,40 @@ view (w, h) (mouseX, mouseY) =
     irisY = mouseY' * (eyeRadius - irisRadius)
     pupilX = mouseX' * (eyeRadius - pupilRadius)
     pupilY = mouseY' * (eyeRadius - pupilRadius)
+    eyeAngle = atan2 dy dx
+    eyeAngle2 = atan2 dx dy
+    corner = atan2 halfH halfW
+    otherCorner = pi - corner
+    topBottom = if  (abs (atan2 dy dx) > corner && abs (atan2 dy dx) < otherCorner)
+      then True
+      else False
+    distance = sqrt (dy ^ 2 + dx ^ 2)
+    maxDistance = if topBottom then
+        abs (halfH / cos ( abs eyeAngle2 ))
+      else
+        abs (halfW / cos ( abs eyeAngle ))
+    distanceCoef = distance / maxDistance
   in
     collage w h
-      [ circle irisRadius
-          |> filled (rgb 107 176 71)
-          |> move (irisX, irisY)
-      , circle pupilRadius
-          |> filled (rgb 50 50 50)
-          |> move (pupilX, pupilY)
+      [ group [
+          oval (irisRadius * 2 - 15 * distanceCoef) (irisRadius * 2)
+            |> filled (rgb 107 176 71)
+            |> move ((27 * distanceCoef), 0)
+        , oval (pupilRadius * 2 - 8 * distanceCoef) (pupilRadius * 2)
+            |> filled (rgb 50 50 50)
+            |> move ((35 * distanceCoef), 0)
+        ]
+        |> rotate eyeAngle
       , eyeGlare
       , eyeBall eyeRadius
+      , toForm (show
+          { distance = distance
+          , eyeAngle = eyeAngle
+          , eyeAngle2 = eyeAngle2
+          , maxDistance = maxDistance
+          , distanceCoef = distanceCoef
+          }
+        )
       ]
 
 -- SIGNALS
